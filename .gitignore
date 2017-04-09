@@ -240,3 +240,11 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/VikingAxe/VikingAxe.sln
+/VikingAxe/VikingAxe/Web.Release.config
+/VikingAxe/VikingAxe/Web.Debug.config
+/VikingAxe/VikingAxe/Web.config
+/VikingAxe/VikingAxe/VikingAxe.csproj
+/VikingAxe/VikingAxe/Properties
+/VikingAxe/VikingAxe/packages.config
+/VikingAxe/VikingAxe/ApplicationInsights.config
