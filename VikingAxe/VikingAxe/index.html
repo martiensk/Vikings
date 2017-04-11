@@ -1,10 +1,93 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Vikings of Mann</title>
+    <title>test</title>
 	<meta charset="utf-8" />
-    <style></style>
-    <script></script>
+    <!--<script src="three/src/Three.js"></script>-->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+    <script src="scripts/ColladaLoader.js"></script>
+    <style>
+        html, body{
+            margin:0;
+            padding:0;
+            width:100%;
+            height:100%;
+            overflow:hidden;
+        }
+    </style>
+    <script>
+        var app = {
+            init: function () {
+                var loader = new THREE.ColladaLoader();
+                loader.options.convertUpAxis = true;
+                loader.load('/model/model.dae', function (collada) {
+                    app.model = collada.scene;
+                    app.model.scale.x = app.model.scale.y = app.model.scale.z = 50;
+                    app.model.position.set(20, 20, 20);
+                    app.model.rotation.set(0, 6, 0);
+                    app.model.updateMatrix();
+                    app.setup.init();
+                    app.render();
+                });
+                console.log(app);
+            },
+            setup: {
+                init: function () {
+                    this.scene();
+                    this.camera();
+                    this.lights();
+                    this.geometry();
+                    this.material();
+                    this.mesh();
+                    this.renderer();
+                },
+                scene: function () {
+                    app.scene = new THREE.Scene();
+                    app.scene.add(app.model);
+                },
+                camera: function () {
+                    app.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+                    app.camera.position.z = 100;
+                    app.camera.lookAt(app.model.position);
+                },
+                lights: function () {
+                    app.ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+                    app.scene.add(app.ambientLight);
+                    app.directionalLight = new THREE.DirectionalLight(0xffffff);
+                    app.directionalLight.position.set(0, 1, 0).normalize();		
+                    app.directionalLight.castShadow = true;          
+                    app.scene.add(app.directionalLight);
+                },
+                geometry: function () {
+                    app.geometry = new THREE.BoxGeometry(20, 20, 20);
+                },
+                material: function () {
+                    app.material = new THREE.MeshLambertMaterial({ color: 0xff0000, shading: THREE.SmoothShading });
+                },
+                mesh: function () {
+                    app.mesh = new THREE.Mesh(app.geometry, app.material);
+                    //app.scene.add(app.mesh);
+                },
+                renderer: function () {
+                    app.renderer = new THREE.WebGLRenderer({ antialias: true });
+                    app.renderer.setSize(window.innerWidth, window.innerHeight);
+                    document.body.appendChild(app.renderer.domElement);
+                }
+            },
+            render: function () {
+                requestAnimationFrame(app.render);
+                if (typeof app.mesh !== 'undefinded') {
+                    app.mesh.rotation.x += 0.01;
+                    app.mesh.rotation.y += 0.02;
+                }
+                app.renderer.render(app.scene, app.camera)
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            app.init();
+        })
+    </script>
 </head>
 <body>
 
