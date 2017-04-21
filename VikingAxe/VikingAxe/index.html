@@ -7,6 +7,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
     <script src="scripts/TrackballControls.js"></script>
     <script src="scripts/ColladaLoader.js"></script>
+    <script src="scripts/ShaderGodRays.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.4/dat.gui.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TimelineMax.min.js"></script>
@@ -21,37 +22,45 @@
     </style>
     <script>
         var app = {
-            init: function () {
+            init: function() {
                 var loader = new THREE.ColladaLoader();
                 //loader.options.convertUpAxis = true;
-                loader.load('/model/model.dae', function (collada) {
-                    app.model = collada.scene;
-                    app.model.scale.x = app.model.scale.y = app.model.scale.z = 50;
-                    app.model.position.set(-9, 4, 40);
-                    app.model.rotation.set(0, 1.5, 6.3);
-                    app.model.updateMatrix();
-                    var textureLoader = new THREE.TextureLoader();
-                    textureLoader.load('/model/initialShadingGroup1_normal.jpg', function (normalMap) {
-                        textureLoader.load('/model/initialShadingGroup1_roughness.jpg', function (bumpMap) {
-                            textureLoader.load('/model/initialShadingGroup1_metallic.jpg', function (lightMap) {
-                                textureLoader.load('/model/initialShadingGroup1_metallic.jpg', function (aoMap) {
-                                    app.model.children[1].children["0"].material.normalMap = normalMap;
-                                    app.model.children[1].children["0"].material.bumpMap = bumpMap;
-                                    app.model.children[1].children["0"].material.bumpScale = 15;
-                                    app.model.children[1].children["0"].material.lightMap = lightMap;
-                                    app.model.children[1].children["0"].material.lightMapIntensity = 15;
-                                    app.model.children[1].children["0"].material.aoMap = aoMap;
-                                    app.model.children[1].children["0"].material.aoMapIntensity = 1;
-                                    app.setup.init();
-                                    app.render();
-                                });
+                loader.load('/model/model.dae',
+                    function(collada) {
+                        app.model = collada.scene;
+                        app.model.scale.x = app.model.scale.y = app.model.scale.z = 50;
+                        app.model.position.set(-9, 4, 40);
+                        app.model.rotation.set(0, 1.5, 6.3);
+                        app.model.updateMatrix();
+                        var textureLoader = new THREE.TextureLoader();
+                        textureLoader.load('/model/initialShadingGroup1_normal.jpg',
+                            function(normalMap) {
+                                textureLoader.load('/model/initialShadingGroup1_roughness.jpg',
+                                    function(bumpMap) {
+                                        textureLoader.load('/model/initialShadingGroup1_metallic.jpg',
+                                            function(lightMap) {
+                                                textureLoader.load('/model/initialShadingGroup1_metallic.jpg',
+                                                    function(aoMap) {
+                                                        app.model.children[1].children["0"].material
+                                                            .normalMap = normalMap;
+                                                        app.model.children[1].children["0"].material.bumpMap = bumpMap;
+                                                        app.model.children[1].children["0"].material.bumpScale = 15;
+                                                        app.model.children[1].children["0"].material
+                                                            .lightMap = lightMap;
+                                                        app.model.children[1].children["0"].material
+                                                            .lightMapIntensity = 15;
+                                                        app.model.children[1].children["0"].material.aoMap = aoMap;
+                                                        app.model.children[1].children["0"].material.aoMapIntensity = 1;
+                                                        app.setup.init();
+                                                        app.render.init();
+                                                    });
+                                            });
+                                    });
                             });
-                        });
                     });
-                });
             },
             setup: {
-                init: function () {
+                init: function() {
                     this.scene();
                     this.camera();
                     this.controls();
@@ -59,19 +68,20 @@
                     //this.geometry();
                     //this.material();
                     this.mesh();
+                    this.godrays.init();
                     this.renderer();
                     this.gui.init();
                     this.events.init();
                 },
-                scene: function () {
+                scene: function() {
                     app.scene = new THREE.Scene();
                     app.scene.background = new THREE.Color(0x1b1b1b);
                 },
-                camera: function () {
+                camera: function() {
                     app.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
                     app.camera.position.z = 100;
                 },
-                controls: function () {
+                controls: function() {
                     app.controls = new THREE.TrackballControls(app.camera);
                     app.controls.rotateSpeed = 2.0;
                     app.controls.zoomSpeed = 2.2;
@@ -82,11 +92,11 @@
                     app.controls.dynamicDampingFactor = 0.3;
                     app.controls.keys = [65, 83, 68];
                 },
-                lights: function () {
+                lights: function() {
                     // Directional Light
                     app.directionalLight = new THREE.DirectionalLight(0x8e8d8d);
-                    app.directionalLight.position.set(0, 1, 0);		
-                    app.directionalLight.castShadow = true;          
+                    app.directionalLight.position.set(0, 1, 0);
+                    app.directionalLight.castShadow = true;
                     app.scene.add(app.directionalLight);
                     // Spotlight 1
                     app.spotLight1 = new THREE.SpotLight(0x404040);
@@ -126,17 +136,22 @@
                     app.pointLight4.distance = 100;
                     app.scene.add(app.pointLight4);
                 },
-                geometry: function () {
+                geometry: function() {
                     //app.geometry = new THREE.BoxGeometry(20, 20, 20);
                 },
-                material: function () {
+                material: function() {
                     //app.material = new THREE.MeshPhongMaterial({ shading: THREE.SmoothShading, color: new THREE.Color(0x2194ce) });
                 },
-                mesh: function () {
+                mesh: function() {
                     //app.scene.add(new THREE.Mesh(app.geometry, app.material));
                     app.scene.add(app.model);
                 },
-                renderer: function () {
+                godrays: {
+                    init: function() {
+                        // Add godrays to scene
+                    }
+                },
+                renderer: function() {
                     app.renderer = new THREE.WebGLRenderer({ antialias: true });
                     app.renderer.setSize(window.innerWidth, window.innerHeight);
                     document.body.appendChild(app.renderer.domElement);
@@ -144,19 +159,19 @@
                     app.model.children[1].children["0"].material.map.anisotropy = app.renderer.getMaxAnisotropy();
                 },
                 gui: {
-                    init: function () {
+                    init: function() {
                         this.vars.init();
                         this.gui.init();
                         this.events();
                     },
                     vars: {
-                        init: function () {
+                        init: function() {
                             app.gui = {};
                             app.gui.axe = new this.axe();
                             app.gui.lights = new this.lights();
                             app.gui.lightToggles = new this.lightToggles();
                         },
-                        axe: function () {
+                        axe: function() {
                             this.rotateX = app.model.rotation.x;
                             this.rotateY = app.model.rotation.y;
                             this.rotateZ = app.model.rotation.z;
@@ -165,7 +180,7 @@
                             this.Y = app.model.position.y;
                             this.Z = app.model.position.z;
                         },
-                        lights: function () {
+                        lights: function() {
                             this.SL1X = app.pointLight4.position.x;
                             this.SL1Y = app.pointLight4.position.y;
                             this.SL1Z = app.pointLight4.position.z;
@@ -177,7 +192,7 @@
                             this.Distance = app.pointLight4.distance;
                             this.Decay = app.pointLight4.decay
                         },
-                        lightToggles: function () {
+                        lightToggles: function() {
                             this.directionalLight = true;
                             this.spotLight1 = true;
                             this.pointLight1 = true;
@@ -193,7 +208,7 @@
                             this.lights();
                             this.lightToggles();
                         },
-                        axe: function () {
+                        axe: function() {
                             var axe = this.gui.addFolder('Axe Mesh');
                             axe.add(app.gui.axe, 'rotateX', 0, 10);
                             axe.add(app.gui.axe, 'rotateY', 0, 10);
@@ -203,7 +218,7 @@
                             axe.add(app.gui.axe, 'Z', -100, 100);
                             axe.add(app.gui.axe, 'autoRotate');
                         },
-                        lights: function () {
+                        lights: function() {
                             var lights = this.gui.addFolder('Lights');
                             lights.add(app.gui.lights, 'SL1X', -100, 100);
                             lights.add(app.gui.lights, 'SL1Y', -100, 100);
@@ -216,7 +231,7 @@
                             lights.add(app.gui.lights, 'Distance', -300, 300);
                             lights.add(app.gui.lights, 'Decay', 0, 100);
                         },
-                        lightToggles: function () {
+                        lightToggles: function() {
                             var lightToggles = this.gui.addFolder('Toggle Lights')
                             lightToggles.add(app.gui.lightToggles, 'directionalLight');
                             lightToggles.add(app.gui.lightToggles, 'spotLight1');
@@ -224,95 +239,115 @@
                             lightToggles.add(app.gui.lightToggles, 'pointLight2');
                             lightToggles.add(app.gui.lightToggles, 'pointLight3');
                         }
-                    }, 
-                    events: function () {
+                    },
+                    events: function() {
                         var el = document.getElementsByClassName('dg')[0];
-                        el.addEventListener('mouseover', function () {
-                            app.controls.enabled = false;
-                        });
-                        el.addEventListener('mouseleave', function () {
-                            app.controls.enabled = true;
-                        });
+                        el.addEventListener('mouseover',
+                            function() {
+                                app.controls.enabled = false;
+                            });
+                        el.addEventListener('mouseleave',
+                            function() {
+                                app.controls.enabled = true;
+                            });
                     }
                 },
                 events: {
                     init: function() {
                         this.click();
                     },
-                    click: function () {
+                    click: function() {
                         window.addEventListener('click', app.helpers.sparks);
                     }
                 }
             },
-            render: function () {
-                requestAnimationFrame(app.render);
-                if (typeof app.model !== 'undefined') {
-                    if (!app.gui.axe.autoRotate) {
-                        app.model.rotation.set(app.gui.axe.rotateX, app.gui.axe.rotateY, app.gui.axe.rotateZ);
-                    } else {
-                        app.model.rotation.x += 0.01;
-                        app.model.rotation.y += 0.01;
-                        app.model.rotation.z += 0.01;
+            render: {
+                init: function() {
+                    requestAnimationFrame(app.render.init);
+                    app.render.gui.setOptions();
+                    app.render.controls();
+                    app.render.flickeringFire();
+                    app.render.temp();
+                    app.renderer.render(app.scene, app.camera);
+                },
+                gui: {
+                    setOptions: function() {
+                        this.axe();
+                        this.lights();
+                        this.currentControls();
+                    },
+                    axe: function() {
+                        if (!app.gui.axe.autoRotate) {
+                            app.model.rotation.set(app.gui.axe.rotateX, app.gui.axe.rotateY, app.gui.axe.rotateZ);
+                        } else {
+                            app.model.rotation.x += 0.01;
+                            app.model.rotation.y += 0.01;
+                            app.model.rotation.z += 0.01;
+                        }
+                        app.model.position.set(app.gui.axe.X, app.gui.axe.Y, app.gui.axe.Z);
+                    },
+                    lights: function() {
+                        app.directionalLight.visible = app.gui.lightToggles.directionalLight;
+                        app.spotLight1.visible = app.gui.lightToggles.spotLight1;
+                        app.pointLight1.visible = app.gui.lightToggles.pointLight1;
+                        app.pointLight2.visible = app.gui.lightToggles.pointLight2;
+                        app.pointLight3.visible = app.gui.lightToggles.pointLight3;
+                        app.pointLight4.visible = app.gui.lightToggles.pointLight4;
+                    },
+                    currentControls: function() {
+                        //app.pointLight4.position.set(app.gui.lights.SL1X, app.gui.lights.SL1Y, app.gui.lights.SL1Z);
+                        //app.pointLight4.rotation.set(app.gui.lights.SL1RX, app.gui.lights.SL1RY, app.gui.lights.SL1RZ);
+                        //app.pointLight4.color = new THREE.Color(app.gui.lights.SL1Color);
+                        //app.pointLight4.intensity = app.gui.lights.SL1Intensity;
+                        //app.pointLight4.distance = app.gui.lights.Distance;
+                        //app.pointLight4.decay = app.gui.lights.Decay;
                     }
-                    app.model.position.set(app.gui.axe.X, app.gui.axe.Y, app.gui.axe.Z);
+                },
+                controls: function() {
+                    app.controls.update();
+                },
+                flickeringFire: function() {
+                    if (Math.round(Math.random())) {
+                        if (app.pointLight1.dir) {
+                            app.pointLight1.decay += 0.05;
+                        } else {
+                            app.pointLight1.decay -= 0.05;
+                        }
+                        if (app.pointLight1.decay > 1.5 || app.pointLight1.decay < 0.5) {
+                            app.pointLight1.dir = !app.pointLight1.dir;
+                        }
+                    }
+                    if (Math.round(Math.random())) {
+                        if (app.pointLight2.dir) {
+                            app.pointLight2.intensity += 0.01;
+                        } else {
+                            app.pointLight2.intensity -= 0.01;
+                        }
+                        if (app.pointLight2.dir2) {
+                            app.pointLight2.position.x += 0.1;
+                        } else {
+                            app.pointLight2.position.x -= 0.1;
+                        }
+                        if (app.pointLight2.intensity > 1 || app.pointLight2.intensity < 0) {
+                            app.pointLight2.dir = !app.pointLight2.dir;
+                        }
+                        if (app.pointLight2.position.x < -70 || app.pointLight2.position.x > 60) {
+                            app.pointLight2.dir2 = !app.pointLight2.dir2;
+                        }
+                    }
+                },
+                temp: function() {
+                    app.model.visible = true;
                 }
-
-                //app.pointLight4.position.set(app.gui.lights.SL1X, app.gui.lights.SL1Y, app.gui.lights.SL1Z);
-                //app.pointLight4.rotation.set(app.gui.lights.SL1RX, app.gui.lights.SL1RY, app.gui.lights.SL1RZ);
-                //app.pointLight4.color = new THREE.Color(app.gui.lights.SL1Color);
-                //app.pointLight4.intensity = app.gui.lights.SL1Intensity;
-                //app.pointLight4.distance = app.gui.lights.Distance;
-                //app.pointLight4.decay = app.gui.lights.Decay;
-
-                app.controls.update();
-
-                app.directionalLight.visible = app.gui.lightToggles.directionalLight;
-                app.spotLight1.visible = app.gui.lightToggles.spotLight1;
-                app.pointLight1.visible = app.gui.lightToggles.pointLight1;
-                app.pointLight2.visible = app.gui.lightToggles.pointLight2;
-                app.pointLight3.visible = app.gui.lightToggles.pointLight3;
-                app.pointLight4.visible = app.gui.lightToggles.pointLight4;
-
-                // Flickering flame
-                if (Math.round(Math.random())) {
-                    if (app.pointLight1.dir) {
-                        app.pointLight1.decay += 0.05;
-                    } else {
-                        app.pointLight1.decay -= 0.05;
-                    }
-                    if (app.pointLight1.decay > 1.5 || app.pointLight1.decay < 0.5) {
-                        app.pointLight1.dir = !app.pointLight1.dir;
-                    }
-                }
-                if (Math.round(Math.random())) {
-                    if (app.pointLight2.dir) {
-                        app.pointLight2.intensity += 0.01;
-                    } else {
-                        app.pointLight2.intensity -= 0.01;
-                    }
-                    if (app.pointLight2.dir2) {
-                        app.pointLight2.position.x += 0.1;
-                    } else {
-                        app.pointLight2.position.x -= 0.1;
-                    }
-                    if (app.pointLight2.intensity > 1 || app.pointLight2.intensity < 0) {
-                        app.pointLight2.dir = !app.pointLight2.dir;
-                    }
-                    if (app.pointLight2.position.x < -70 || app.pointLight2.position.x > 60) {
-                        app.pointLight2.dir2 = !app.pointLight2.dir2;
-                    }
-                }
-
-                app.renderer.render(app.scene, app.camera)
             },
             helpers: {
-                sparks: function () {
+                sparks: function() {
                     if (!app.pointLight4.tweening) {
                         var t = new TimelineMax({
-                            onStart: function () {
+                            onStart: function() {
                                 app.pointLight4.tweening = true;
                             },
-                            onComplete: function () {
+                            onComplete: function() {
                                 app.pointLight4.tweening = false;
                             }
                         });
@@ -327,7 +362,7 @@
 
         window.addEventListener('DOMContentLoaded', function () {
             app.init();
-        })
+        });
     </script>
 </head>
 <body>
