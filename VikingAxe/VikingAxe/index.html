@@ -51,8 +51,13 @@
                                                             .lightMapIntensity = 15;
                                                         app.model.children[1].children["0"].material.aoMap = aoMap;
                                                         app.model.children[1].children["0"].material.aoMapIntensity = 1;
-                                                        app.setup.init();
-                                                        app.render.init();
+                                                        var fontLoader = new THREE.FontLoader();
+                                                        fontLoader.load('fonts/json/Norse_Regular.json', function (font) {
+                                                            app.fonts = {};
+                                                            app.fonts.norse = font;
+                                                            app.setup.init();
+                                                            app.render.init();
+                                                        });
                                                     });
                                             });
                                     });
@@ -65,8 +70,8 @@
                     this.camera();
                     this.controls();
                     this.lights();
-                    //this.geometry();
-                    //this.material();
+                    this.geometry.init();
+                    this.material();
                     this.mesh();
                     this.godrays.init();
                     this.renderer();
@@ -136,14 +141,30 @@
                     app.pointLight4.distance = 100;
                     app.scene.add(app.pointLight4);
                 },
-                geometry: function() {
-                    //app.geometry = new THREE.BoxGeometry(20, 20, 20);
+                geometry: {
+                    init: function() {
+                        this.text();
+                    },
+                    text: function () {
+                        this.vikings = new THREE.TextGeometry('Vikings', {
+                            font: app.fonts.norse,
+                            size: 24,
+                            height: 2,
+                            curveSegments: 12,
+                            bevelEnabled: false,
+                            bevelThickness: 5,
+                            bevelSize: 2,
+                            bevelSegments: 2
+                        });
+                    }
                 },
                 material: function() {
-                    //app.material = new THREE.MeshPhongMaterial({ shading: THREE.SmoothShading, color: new THREE.Color(0x2194ce) });
+                    app.material = new THREE.MeshPhongMaterial({ shading: THREE.SmoothShading, color: new THREE.Color(0x3c3c3c) });
                 },
-                mesh: function() {
-                    //app.scene.add(new THREE.Mesh(app.geometry, app.material));
+                mesh: function () {
+                    this.vikingMesh = new THREE.Mesh(this.geometry.vikings, app.material);
+                    this.vikingMesh.position.set(20, 20, 20);
+                    app.scene.add(this.vikingMesh);
                     app.scene.add(app.model);
                 },
                 godrays: {
@@ -337,7 +358,7 @@
                     }
                 },
                 temp: function() {
-                    app.model.visible = true;
+                    app.model.visible = false;
                 }
             },
             helpers: {
