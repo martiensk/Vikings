@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>test</title>
@@ -70,6 +70,7 @@
             setup: {
                 init: function() {
                     this.scene();
+                    this.fog();
                     this.camera();
                     this.controls();
                     this.lights();
@@ -84,7 +85,10 @@
                 scene: function() {
                     app.scene = new THREE.Scene();
                     app.scene.background = new THREE.Color(0x1b1b1b);
-                }
+                },
+                fog: function() {
+                    app.scene.fog = new THREE.FogExp2(0xefd1b5, 0.0025);
+                },
                 camera: function() {
                     app.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
                     app.camera.position.z = 100;
