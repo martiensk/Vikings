@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>test</title>
@@ -55,8 +55,11 @@
                                                         fontLoader.load('fonts/json/Norse_Regular.json', function (font) {
                                                             app.fonts = {};
                                                             app.fonts.norse = font;
-                                                            app.setup.init();
-                                                            app.render.init();
+                                                            fontLoader.load('fonts/json/Celtic.json', function (vikingFont) {
+                                                                app.fonts.viking = vikingFont;
+                                                                app.setup.init();
+                                                                app.render.init(); 
+                                                            });
                                                         });
                                                     });
                                             });
@@ -81,7 +84,7 @@
                 scene: function() {
                     app.scene = new THREE.Scene();
                     app.scene.background = new THREE.Color(0x1b1b1b);
-                },
+                }
                 camera: function() {
                     app.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
                     app.camera.position.z = 100;
@@ -156,6 +159,16 @@
                             bevelSize: 2,
                             bevelSegments: 2
                         });
+                        this.ofman = new THREE.TextGeometry('of Mann', {
+                            font: app.fonts.viking,
+                            size: 18,
+                            height: 2,
+                            curveSegments: 12,
+                            bevelEnabled: false,
+                            bevelThickness: 5,
+                            bevelSize: 2,
+                            bevelSegments: 2
+                        }); 
                     }
                 },
                 material: function() {
@@ -163,8 +176,11 @@
                 },
                 mesh: function () {
                     this.vikingMesh = new THREE.Mesh(this.geometry.vikings, app.material);
-                    this.vikingMesh.position.set(20, 20, 20);
+                    this.vikingMesh.position.set(0, 10, 30);
+                    this.ofmanMesh = new THREE.Mesh(this.geometry.ofman, app.material);
+                    this.ofmanMesh.position.set(5, -4, 20);
                     app.scene.add(this.vikingMesh);
+                    app.scene.add(this.ofmanMesh);
                     app.scene.add(app.model);
                 },
                 godrays: {
@@ -189,8 +205,9 @@
                         init: function() {
                             app.gui = {};
                             app.gui.axe = new this.axe();
-                            app.gui.lights = new this.lights();
+                            //app.gui.lights = new this.lights();
                             app.gui.lightToggles = new this.lightToggles();
+                            app.gui.temp = new this.temp();
                         },
                         axe: function() {
                             this.rotateX = app.model.rotation.x;
@@ -211,7 +228,7 @@
                             this.SL1Color = '#848484';
                             this.SL1Intensity = 1;
                             this.Distance = app.pointLight4.distance;
-                            this.Decay = app.pointLight4.decay
+                            this.Decay = app.pointLight4.decay;
                         },
                         lightToggles: function() {
                             this.directionalLight = true;
@@ -220,14 +237,29 @@
                             this.pointLight2 = true;
                             this.pointLight3 = true;
                             this.pointLight4 = true;
+                        },
+                        temp: function() {
+                            this.X = app.setup.vikingMesh.position.x;
+                            this.Y = app.setup.vikingMesh.position.y;
+                            this.Z = app.setup.vikingMesh.position.z;
+                            this.rX = app.setup.vikingMesh.rotation.x;
+                            this.rY = app.setup.vikingMesh.rotation.y;
+                            this.rZ = app.setup.vikingMesh.rotation.z;
+                            this.Xm = app.setup.ofmanMesh.position.x;
+                            this.Ym = app.setup.ofmanMesh.position.y;
+                            this.Zm = app.setup.ofmanMesh.position.z;
+                            this.rXm = app.setup.ofmanMesh.rotation.x;
+                            this.rYm = app.setup.ofmanMesh.rotation.y;
+                            this.rZm = app.setup.ofmanMesh.rotation.z;
                         }
                     },
                     gui: {
                         init: function() {
                             this.gui = new dat.GUI();
                             this.axe();
-                            this.lights();
+                            //this.lights();
                             this.lightToggles();
+                            this.temp();
                         },
                         axe: function() {
                             var axe = this.gui.addFolder('Axe Mesh');
@@ -259,6 +291,21 @@
                             lightToggles.add(app.gui.lightToggles, 'pointLight1');
                             lightToggles.add(app.gui.lightToggles, 'pointLight2');
                             lightToggles.add(app.gui.lightToggles, 'pointLight3');
+                        },
+                        temp: function() {
+                            var temp = this.gui.addFolder('Temp');
+                            temp.add(app.gui.temp, 'X', -100, 100);
+                            temp.add(app.gui.temp, 'Y', -100, 100);
+                            temp.add(app.gui.temp, 'Z', -100, 100);
+                            temp.add(app.gui.temp, 'rX', -1, 1, 0.05);
+                            temp.add(app.gui.temp, 'rY', -1, 1, 0.05);
+                            temp.add(app.gui.temp, 'rZ', -1, 1, 0.05);
+                            temp.add(app.gui.temp, 'Xm', -100, 100);
+                            temp.add(app.gui.temp, 'Ym', -100, 100);
+                            temp.add(app.gui.temp, 'Zm', -100, 100);
+                            temp.add(app.gui.temp, 'rXm', 0, 1, 0.1);
+                            temp.add(app.gui.temp, 'rYm', 0, 1, 0.1);
+                            temp.add(app.gui.temp, 'rZm', 0, 1, 0.1);
                         }
                     },
                     events: function() {
@@ -316,12 +363,18 @@
                         app.pointLight4.visible = app.gui.lightToggles.pointLight4;
                     },
                     currentControls: function() {
-                        //app.pointLight4.position.set(app.gui.lights.SL1X, app.gui.lights.SL1Y, app.gui.lights.SL1Z);
-                        //app.pointLight4.rotation.set(app.gui.lights.SL1RX, app.gui.lights.SL1RY, app.gui.lights.SL1RZ);
-                        //app.pointLight4.color = new THREE.Color(app.gui.lights.SL1Color);
-                        //app.pointLight4.intensity = app.gui.lights.SL1Intensity;
-                        //app.pointLight4.distance = app.gui.lights.Distance;
-                        //app.pointLight4.decay = app.gui.lights.Decay;
+                        app.setup.vikingMesh.position.x = app.gui.temp.X;
+                        app.setup.vikingMesh.position.y = app.gui.temp.Y;
+                        app.setup.vikingMesh.position.z = app.gui.temp.Z;
+                        app.setup.vikingMesh.rotation.x = app.gui.temp.rX;
+                        app.setup.vikingMesh.rotation.y = app.gui.temp.rY;
+                        app.setup.vikingMesh.rotation.z = app.gui.temp.rZ;
+                        app.setup.ofmanMesh.position.x = app.gui.temp.Xm;
+                        app.setup.ofmanMesh.position.y = app.gui.temp.Ym;
+                        app.setup.ofmanMesh.position.z = app.gui.temp.Zm;
+                        app.setup.ofmanMesh.rotation.x = app.gui.temp.rXm;
+                        app.setup.ofmanMesh.rotation.y = app.gui.temp.rYm;
+                        app.setup.ofmanMesh.rotation.z = app.gui.temp.rZm;
                     }
                 },
                 controls: function() {
