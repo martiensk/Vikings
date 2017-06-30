@@ -36,7 +36,7 @@
                     function(collada) {
                         app.model = collada.scene;
                         app.model.scale.x = app.model.scale.y = app.model.scale.z = 50;
-                        app.model.position.set(-52.8, 6.8, 35);
+                        app.model.position.set(-80.8, 6.8, 35);
                         app.model.rotation.set(0, 1.7, 6.3);
                         app.model.updateMatrix();
                         var textureLoader = new THREE.TextureLoader();
@@ -78,7 +78,6 @@
                 init: function() {
                     this.scene();
                     this.camera();
-                    //this.controls();
                     this.lights();
                     this.geometry.init();
                     this.material();
@@ -95,20 +94,9 @@
                 },
                 camera: function() {
                     app.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-                    app.camera.position.x = 16;
-                    app.camera.position.y = 7;
-                    app.camera.position.z = 75;
-                },
-                controls: function() {
-                    app.controls = new THREE.TrackballControls(app.camera);
-                    app.controls.rotateSpeed = 2.0;
-                    app.controls.zoomSpeed = 2.2;
-                    app.controls.panSpeed = 1.8;
-                    app.controls.noZoom = false;
-                    app.controls.noPan = false;
-                    app.controls.staticMoving = true;
-                    app.controls.dynamicDampingFactor = 0.3;
-                    app.controls.keys = [65, 83, 68];
+                    app.camera.position.x = 0;
+                    app.camera.position.y = 20;
+                    app.camera.position.z = 68;
                 },
                 lights: function() {
                     // Directional Light
@@ -186,9 +174,9 @@
                 },
                 mesh: function () {
                     this.vikingMesh = new THREE.Mesh(this.geometry.vikings, app.material);
-                    this.vikingMesh.position.set(0, 10, 30);
+                    this.vikingMesh.position.set(-30, 10, 30);
                     this.ofmanMesh = new THREE.Mesh(this.geometry.ofman, app.material);
-                    this.ofmanMesh.position.set(5, -4, 20);
+                    this.ofmanMesh.position.set(-25, -8, 20);
                     app.scene.add(this.vikingMesh);
                     app.scene.add(this.ofmanMesh);
                     app.scene.add(app.model);
@@ -331,9 +319,9 @@
                             this.pointLight4 = true;
                         },
                         temp: function() {
-                            //this.X = app.camera.position.x;
-                            //this.Y = app.camera.position.y;
-                            //this.Z = app.camera.position.z;
+                            this.X = app.camera.position.x;
+                            this.Y = app.camera.position.y;
+                            this.Z = app.camera.position.z;
                             this.rX = 0;
                             this.rY = 0;
                             this.rZ = 0;
@@ -386,9 +374,9 @@
                         },
                         temp: function() {
                             var temp = this.gui.addFolder('Temp');
-                            //temp.add(app.gui.temp, 'X', -100, 100);
-                            //temp.add(app.gui.temp, 'Y', -100, 100);
-                            //temp.add(app.gui.temp, 'Z', -100, 100);
+                            temp.add(app.gui.temp, 'X', -100, 100);
+                            temp.add(app.gui.temp, 'Y', -100, 100);
+                            temp.add(app.gui.temp, 'Z', -100, 100);
                             temp.add(app.gui.temp, 'rX', -1, 1, 0.05);
                             temp.add(app.gui.temp, 'rY', -3, 4, 0.05);
                             temp.add(app.gui.temp, 'rZ', -1, 1, 0.05);
@@ -420,6 +408,7 @@
                         app.windowHalfX = window.innerWidth / 2;
                         app.windowHalfY = window.innerHeight / 2;
                         document.addEventListener('mousemove', this.move);
+                        window.addEventListener('resize', this.resize);
                     },
                     click: function() {
                         window.addEventListener('click', app.helpers.sparks);
@@ -427,6 +416,12 @@
                     move: function (e) {
                         app.mouseX = e.clientX - app.windowHalfX;
                         app.mouseY = e.clientY - app.windowHalfY;
+                    },
+                    resize: function () {
+                        console.log('resized');
+                        app.camera.aspect = window.innerWidth / window.innerHeight;
+                        app.camera.updateProjectionMatrix();
+                        app.renderer.setSize(window.innerWidth, window.innerHeight);
                     }
                 }
             },
@@ -479,14 +474,11 @@
                         //app.setup.ofmanMesh.rotation.z = app.gui.temp.rZm;
                     }
                 },
-                controls: function() {
-                    //app.controls.update();
-                    if ((app.camera.position.x > -40 || app.mouseX > 0) && (app.camera.position.x < 40 || app.mouseX < 0)) {
-                        app.camera.position.x += (app.mouseX - app.camera.position.x) * 0.001;
-                    }
-                    if ((app.camera.position.y > -5 || app.mouseY < 0) && (app.camera.position.y < 25 || app.mouseY > 0)) {
-                        app.camera.position.y += (- (app.mouseY) - app.camera.position.y) * 0.001;
-                    }
+                controls: function () {
+                    app.camera.position.x = 0;
+                    app.camera.position.y = 20;
+                    app.camera.position.x += (app.mouseX - app.camera.position.x) * 0.02;
+                    app.camera.position.y += (- (app.mouseY) - app.camera.position.y) * 0.02;
                     app.camera.lookAt(app.scene.position);
                 },
                 flickeringFire: function() {
