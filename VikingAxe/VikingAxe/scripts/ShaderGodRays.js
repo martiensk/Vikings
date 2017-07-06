@@ -100,25 +100,25 @@ THREE.ShaderGodRays = {
             // This breaks ANGLE in Chrome 22
             //	- see http://code.google.com/p/chromium/issues/detail?id=153105
 
-            /*
+            
             // Unrolling didnt do much on my hardware (ATI Mobility Radeon 3450),
             // so i've just left the loop
 
-            "for ( float i = 0.0; i < TAPS_PER_PASS; i += 1.0 ) {",
+            //"for ( float i = 0.0; i < TAPS_PER_PASS; i += 1.0 ) {",
 
-                // Accumulate samples, making sure we dont walk past the light source.
+            //    // Accumulate samples, making sure we dont walk past the light source.
 
-                // The check for uv.y < 1 would not be necessary with "border" UV wrap
-                // mode, with a black border colour. I don't think this is currently
-                // exposed by three.js. As a result there might be artifacts when the
-                // sun is to the left, right or bottom of screen as these cases are
-                // not specifically handled.
+            //    // The check for uv.y < 1 would not be necessary with "border" UV wrap
+            //    // mode, with a black border colour. I don't think this is currently
+            //    // exposed by three.js. As a result there might be artifacts when the
+            //    // sun is to the left, right or bottom of screen as these cases are
+            //    // not specifically handled.
 
-                "col += ( i <= iters && uv.y < 1.0 ? texture2D( tInput, uv ).r : 0.0 );",
-                "uv += stepv;",
+            //    "col += ( i <= iters && uv.y < 1.0 ? texture2D( tInput, uv ).r : 0.0 );",
+            //    "uv += stepv;",
 
-            "}",
-            */
+            //"}",
+            
 
             // Unrolling loop manually makes it work in ANGLE
 
@@ -199,6 +199,7 @@ THREE.ShaderGodRays = {
         fragmentShader: [
 
             "varying vec2 vUv;",
+            "uniform vec4 fCol;",
 
             "uniform sampler2D tColors;",
             "uniform sampler2D tGodRays;",
@@ -211,85 +212,13 @@ THREE.ShaderGodRays = {
             // Since THREE.MeshDepthMaterial renders foreground objects white and background
             // objects black, the god-rays will be white streaks. Therefore value is inverted
             // before being combined with tColors
-
-            "gl_FragColor = texture2D( tColors, vUv ) + fGodRayIntensity * vec4( 1.0 - texture2D( tGodRays, vUv ).r );",
-            "gl_FragColor.a = 1.0;",
-
-            "}"
-
-        ].join("\n")
-
-    },
-
-
-	/**
-	 * A dodgy sun/sky shader. Makes a bright spot at the sun location. Would be
-	 * cheaper/faster/simpler to implement this as a simple sun sprite.
-	 */
-
-    'godrays_fake_sun': {
-
-        uniforms: {
-
-            vSunPositionScreenSpace: {
-                value: new THREE.Vector2(0.5, 0.5)
-            },
-
-            fAspect: {
-                value: 1.0
-            },
-
-            sunColor: {
-                value: new THREE.Color(0xffee00)
-            },
-
-            bgColor: {
-                value: new THREE.Color(0x000000)
-            }
-
-        },
-
-        vertexShader: [
-
-            "varying vec2 vUv;",
-
-            "void main() {",
-
-            "vUv = uv;",
-            "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-
-            "}"
-
-        ].join("\n"),
-
-        fragmentShader: [
-
-            "varying vec2 vUv;",
-
-            "uniform vec2 vSunPositionScreenSpace;",
-            "uniform float fAspect;",
-
-            "uniform vec3 sunColor;",
-            "uniform vec3 bgColor;",
-
-            "void main() {",
-
-            "vec2 diff = vUv - vSunPositionScreenSpace;",
-
-            // Correct for aspect ratio
-
-            "diff.x *= fAspect;",
-
-            "float prop = clamp( length( diff ) / 0.5, 0.0, 1.0 );",
-            "prop = 0.35 * pow( 1.0 - prop, 3.0 );",
-
-            "gl_FragColor.xyz = mix( sunColor, bgColor, 1.0 - prop );",
-            "gl_FragColor.w = 1.0;",
+            "gl_FragColor =  texture2D( tColors, vUv ) + fGodRayIntensity * (1.0 - vec4(texture2D( (tGodRays ), vUv )) - vec4(0.6, 0.855, 1.0, 0.0));",
+            // "gl_FragColor = texture2D( tColors, vUv ) + fGodRayIntensity * (vec4( 1.0 - texture2D( (tGodRays ), vUv )) + vec4(1.0, 0.0, 0.0, 1.0));",
+            //"gl_FragColor.a = 0.5;",
 
             "}"
 
         ].join("\n")
 
     }
-
 };
