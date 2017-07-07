@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>test</title>
+	<meta charset="utf-8" />
+    <!--<script src="three/src/Three.js"></script>-->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+    <script src="scripts/TrackballControls.js"></script>
+    <script src="scripts/ColladaLoader.js"></script>
+    <script src="scripts/ShaderGodRays.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.4/dat.gui.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TimelineMax.min.js"></script>
+    <style>
+        html, body{
+            margin:0;
+            padding:0;
+            width:100%;
+            height:100%;
+            overflow:hidden;
+        }
+        #info{
+            color:#fff;
+            position:fixed;
+            display:block;
+            left:10px;
+            bottom:10px;
+        }
+    </style>
+    <script>
+        var app = {
+            init: function() {
+                var fontLoader = new THREE.FontLoader();
+                fontLoader.load('fonts/json/Harald Runic_Regular.json', function (font) {
+                    app.fonts = {};
+                    app.fonts.norse = font;
+                    var textureLoader = new THREE.TextureLoader();
+                    textureLoader.load('/images/sky.jpg', function (sky) {
+                        app.sunsprite = textureLoader.load("images/lensflare0.png");
+                        app.lensFlareLine = textureLoader.load("images/lensflare2.png");
+                        app.lensFlareCirc = textureLoader.load("images/lensflare3.png");
+                        app.skymap = sky;
+                        app.setup.init();
+                    });
+                });
+            },
+            settings: {
+                sunPosition: new THREE.Vector3(-10, 32, -190),
+                screenSpacePosition: new THREE.Vector3(),
+                godrayIntensity: 0.75
+            },
+            setup: {
+                init: function() {
+                    this.scene();
+                    this.camera();
+                    this.lights();
+                    this.fog();
+                    this.geometry.init();
+                    this.mesh();
+                    this.skybox();
+                    //this.lensFlare();
+                    this.godrays.init();
+                    this.renderer();
+                    this.events.init();
+                    app.render.init();
+                },
+                scene: function() {
+                    app.scene = new THREE.Scene();
+                    app.scene.background = new THREE.Color(0x1b1b1b);
+                },
+                camera: function() {
+                    app.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+                    app.camera.position.x = 0;
+                    app.camera.position.y = 20;
+                    app.camera.position.z = 68;
+                },
+                lights: function() {
+                    // Directional Light
+                    app.directionalLight = new THREE.DirectionalLight(0x8e8d8d);
+                    app.directionalLight.position.set(0, 1, 0);
+                    app.directionalLight.castShadow = true;
+                    app.scene.add(app.directionalLight);
+                    // Spotlight 1
+                    app.spotLight1 = new THREE.SpotLight(0x404040);
+                    app.spotLight1.position.set(-6, 18, 100);
+                    app.spotLight1.intensity = 0.65;
+                    app.spotLight1.castShadow = true;
+                    app.scene.add(app.spotLight1);
+                },
+                fog: function () {
+                    app.scene.fog = new THREE.Fog(0xff0000, 50, 700);
+                },
+                geometry: {
+                    init: function() {
+                        this.text();
+                    },
+                    text: function () {
+                        app.vikings = [];
+                        var alphabet = 'abcdefghijklmnopqrstuvwxyz';
+                        for (var c = 0; c <= 10; c++) {
+                            var i = alphabet.length;
+                            while (i--) {
+                                app.vikings.push(new THREE.TextGeometry(alphabet[i], {
+                                    font: app.fonts.norse,
+                                    size: Math.random() * 5 + 1,
+                                    height: Math.random() * 2 + 0.5,
+                                    curveSegments: 12
+                                }));
+                            };
+                        }
+                    }
+                },
+                mesh: function () {
+                    this.group = new THREE.Object3D();
+                    for (var i in app.vikings) {
+                        var m = new THREE.MeshLambertMaterial({
+                            shading: THREE.SmoothShading,
+                            color: '#' + Math.floor(Math.random() * 16777215).toString(16)
+                        });
+                        var v = new THREE.Mesh(app.vikings[i], m);
+                        v.rotation.set(Math.round(Math.random() * -2) + 2, Math.round(Math.random() * -2) + 2, Math.round(Math.random() * -2) + 2);
+                        v.position.set(Math.round(Math.random() * 150) - 75, Math.round(Math.random() * 150) - 75, Math.round(Math.random() * 150) - 75);
+                        this.group.add(v);
+                    }
+                    app.scene.add(this.group);
+                },
+                skybox: function () {
+                    app.setup.skybox.geometry = new THREE.SphereGeometry(200, 25, 25);
+                    app.setup.skybox.material = new THREE.MeshBasicMaterial({
+                        map: app.skymap,
+                    });
+                    app.setup.skybox.mesh = new THREE.Mesh(app.setup.skybox.geometry, app.setup.skybox.material);
+                    app.setup.skybox.mesh.material.side = THREE.DoubleSide;
+                    app.setup.skybox.mesh.rotation.x = 0.1;
+                    app.setup.skybox.mesh.rotation.y = 3.55;
+                    app.setup.skybox.mesh.rotation.z = 0.02;
+                    app.scene.add(app.setup.skybox.mesh);
+                },
+                lensFlare: function () {
+                    app.lensFlare = new THREE.LensFlare(app.sunsprite, 700, 0.0, THREE.AdditiveBlending, new THREE.Color(0xffffff));
+                    app.lensFlare.add(app.lensFlareLine, 512, 0.0, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareLine, 512, 0.0, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareLine, 512, 0.0, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareCirc, 60, 0.6, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareCirc, 70, 0.7, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareCirc, 120, 0.9, THREE.AdditiveBlending);
+                    app.lensFlare.add(app.lensFlareCirc, 70, 1.0, THREE.AdditiveBlending);
+                    app.lensFlare.customUpdateCallback = app.helpers.lensFlareUpdateCallback;
+                    app.lensFlare.position.set(-10, 32, -190);
+                    app.scene.add(app.lensFlare);
+                },
+                godrays: {
+                    init: function () {
+
+                        app.postprocessing = { enabled: true };
+                        app.postprocessing.scene = new THREE.Scene();
+                        app.materialDepth = new THREE.MeshDepthMaterial();
+
+                        app.postprocessing.camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -10000, 10000);
+                        app.postprocessing.camera.position.z = 100;
+
+                        app.postprocessing.scene.add(app.postprocessing.camera);
+
+                        var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+                        app.postprocessing.rtTextureColors = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+
+                        //// Switching the depth formats to luminance from rgb doesn't seem to work. I didn't
+                        //// investigate further for now.
+                        //// pars.format = THREE.LuminanceFormat;
+
+                        //// I would have this quarter size and use it as one of the ping-pong render
+                        //// targets but the aliasing causes some temporal flickering
+
+                        app.postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+
+                        //// Aggressive downsize god-ray ping-pong render targets to minimize cost
+
+                        var w = window.innerWidth / 4.0;
+                        var h = window.innerHeight / 4.0;
+                        app.postprocessing.rtTextureGodRays1 = new THREE.WebGLRenderTarget(w, h, pars);
+                        app.postprocessing.rtTextureGodRays2 = new THREE.WebGLRenderTarget(w, h, pars);
+
+                        //// god-ray shaders
+
+                        var godraysGenShader = THREE.ShaderGodRays["godrays_generate"];
+                        app.postprocessing.godrayGenUniforms = THREE.UniformsUtils.clone(godraysGenShader.uniforms);
+                        app.postprocessing.materialGodraysGenerate = new THREE.ShaderMaterial({
+                            uniforms: app.postprocessing.godrayGenUniforms,
+                            vertexShader: godraysGenShader.vertexShader,
+                            fragmentShader: godraysGenShader.fragmentShader
+                        });
+
+                        var godraysCombineShader = THREE.ShaderGodRays["godrays_combine"];
+                        app.postprocessing.godrayCombineUniforms = THREE.UniformsUtils.clone(godraysCombineShader.uniforms);
+                        app.postprocessing.materialGodraysCombine = new THREE.ShaderMaterial({
+                            uniforms: app.postprocessing.godrayCombineUniforms,
+                            vertexShader: godraysCombineShader.vertexShader,
+                            fragmentShader: godraysCombineShader.fragmentShader
+                        });
+
+                        app.postprocessing.godrayCombineUniforms.fGodRayIntensity.value = app.settings.godrayIntensity;
+
+                        app.postprocessing.quad = new THREE.Mesh(
+                            new THREE.PlaneBufferGeometry(window.innerWidth, window.innerHeight),
+                            app.postprocessing.materialGodraysGenerate
+                        );
+                        app.postprocessing.quad.position.z = -9900;
+                        app.postprocessing.scene.add(app.postprocessing.quad);
+                    }
+                },
+                renderer: function() {
+                    app.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                    app.renderer.setSize(window.innerWidth, window.innerHeight);
+                    app.renderer.setPixelRatio(window.devicePixelRatio);
+                    document.body.appendChild(app.renderer.domElement);
+                },
+                events: {
+                    init: function() {
+                        app.mouseX = 0;
+                        app.mouseY = 0;
+                        app.windowHalfX = window.innerWidth / 2;
+                        app.windowHalfY = window.innerHeight / 2;
+                        document.addEventListener('mousemove', this.move);
+                        window.addEventListener('resize', this.resize);
+                    },
+                    move: function (e) {
+                        app.mouseX = e.clientX - app.windowHalfX;
+                        app.mouseY = e.clientY - app.windowHalfY;
+                    },
+                    resize: function () {
+                        console.log('resized');
+                        app.camera.aspect = window.innerWidth / window.innerHeight;
+                        app.camera.updateProjectionMatrix();
+                        app.renderer.setSize(window.innerWidth, window.innerHeight);
+                    }
+                }
+            },
+            render: {
+                init: function() {
+                    requestAnimationFrame(app.render.init);
+                    app.setup.group.rotation.x += 0.002;
+                    app.setup.group.rotation.z += 0.002;
+                    app.render.controls();
+                    app.renderer.render(app.scene, app.camera);
+                    app.render.postprocessing();
+                },
+                controls: function () {
+                    app.camera.position.x = 0;
+                    app.camera.position.y = 20;
+                    app.camera.position.x += (app.mouseX - app.camera.position.x) * 0.02;
+                    app.camera.position.y += (- (app.mouseY) - app.camera.position.y) * 0.02;
+                    app.camera.lookAt(app.scene.position);
+                },
+                postprocessing: function () {
+                    app.settings.screenSpacePosition.copy(app.settings.sunPosition).project(app.camera);
+
+                    app.settings.screenSpacePosition.x = (app.settings.screenSpacePosition.x + 1) / 2;
+                    app.settings.screenSpacePosition.y = (app.settings.screenSpacePosition.y + 1) / 2;
+
+                    // Give it to the god-ray and sun shaders
+
+                    app.postprocessing.godrayGenUniforms["vSunPositionScreenSpace"].value.x = app.settings.screenSpacePosition.x;
+                    app.postprocessing.godrayGenUniforms["vSunPositionScreenSpace"].value.y = app.settings.screenSpacePosition.y;
+
+                    //// -- Draw sky and sun --
+
+                    //// Clear colors and depths, will clear to sky color
+
+                    app.renderer.clearTarget(app.postprocessing.rtTextureColors, true, true, false);
+
+                    //// Sun render. Runs a shader that gives a brightness based on the screen
+                    //// space distance to the sun. Not very efficient, so i make a scissor
+                    //// rectangle around the suns position to avoid rendering surrounding pixels.
+
+                    var sunsqH = 0.74 * window.innerHeight; // 0.74 depends on extent of sun from shader
+                    var sunsqW = 0.74 * window.innerHeight; // both depend on height because sun is aspect-corrected
+
+                    app.settings.screenSpacePosition.x *= window.innerWidth;
+                    app.settings.screenSpacePosition.y *= window.innerHeight;
+
+                    app.renderer.setScissor(app.settings.screenSpacePosition.x - sunsqW / 2, app.settings.screenSpacePosition.y - sunsqH / 2, sunsqW, sunsqH);
+                    app.renderer.setScissorTest(true);
+
+                    app.postprocessing.scene.overrideMaterial = app.postprocessing.materialGodraysFakeSun;
+                    app.renderer.render(app.postprocessing.scene, app.postprocessing.camera, app.postprocessing.rtTextureColors);
+
+                    app.renderer.setScissorTest(false);
+
+                    //// -- Draw scene objects --
+
+                    //// Colors
+
+                    app.scene.overrideMaterial = null;
+                    app.renderer.render(app.scene, app.camera, app.postprocessing.rtTextureColors);
+
+                    //// Depth
+
+                    app.scene.overrideMaterial = app.materialDepth;
+                    app.renderer.render(app.scene, app.camera, app.postprocessing.rtTextureDepth, true);
+
+                    //// -- Render god-rays --
+
+                    //// Maximum length of god-rays (in texture space [0,1]X[0,1])
+
+                    var filterLen = 1.0;
+
+                    //// Samples taken by filter
+
+                    var TAPS_PER_PASS = 6.0;
+
+                    //// Pass order could equivalently be 3,2,1 (instead of 1,2,3), which
+                    //// would start with a small filter support and grow to large. however
+                    //// the large-to-small order produces less objectionable aliasing artifacts that
+                    //// appear as a glimmer along the length of the beams
+
+                    //// pass 1 - render into first ping-pong target
+
+                    var pass = 1.0;
+                    var stepLen = filterLen * Math.pow(TAPS_PER_PASS, -pass);
+
+                    app.postprocessing.godrayGenUniforms["fStepSize"].value = stepLen;
+                    app.postprocessing.godrayGenUniforms["tInput"].value = app.postprocessing.rtTextureDepth.texture;
+
+                    app.postprocessing.scene.overrideMaterial = app.postprocessing.materialGodraysGenerate;
+
+                    app.renderer.render(app.postprocessing.scene, app.postprocessing.camera, app.postprocessing.rtTextureGodRays2);
+
+                    //// pass 2 - render into second ping-pong target
+
+                    pass = 2.0;
+                    stepLen = filterLen * Math.pow(TAPS_PER_PASS, -pass);
+
+                    app.postprocessing.godrayGenUniforms["fStepSize"].value = stepLen;
+                    app.postprocessing.godrayGenUniforms["tInput"].value = app.postprocessing.rtTextureGodRays2.texture;
+
+                    app.renderer.render(app.postprocessing.scene, app.postprocessing.camera, app.postprocessing.rtTextureGodRays1);
+
+                    //// pass 3 - 1st RT
+
+                    app.pass = 3.0;
+                    app.stepLen = filterLen * Math.pow(TAPS_PER_PASS, -pass);
+
+                    app.postprocessing.godrayGenUniforms["fStepSize"].value = stepLen;
+                    app.postprocessing.godrayGenUniforms["tInput"].value = app.postprocessing.rtTextureGodRays1.texture;
+
+                    app.renderer.render(app.postprocessing.scene, app.postprocessing.camera, app.postprocessing.rtTextureGodRays2);
+
+                     ////final pass - composite god-rays onto colors
+
+                    app.postprocessing.godrayCombineUniforms["tColors"].value = app.postprocessing.rtTextureColors.texture;
+                    app.postprocessing.godrayCombineUniforms["tGodRays"].value = app.postprocessing.rtTextureGodRays2.texture;
+
+                    app.postprocessing.scene.overrideMaterial = app.postprocessing.materialGodraysCombine;
+
+                    app.renderer.render(app.postprocessing.scene, app.postprocessing.camera);
+                    app.postprocessing.scene.overrideMaterial = null;
+                },
+            },
+            helpers: {
+                lensFlareUpdateCallback: function (object) {
+                    var f, fl = object.lensFlares.length;
+                    var flare;
+                    var vecX = -object.positionScreen.x * 2;
+                    var vecY = -object.positionScreen.y * 2;
+                    for (f = 0; f < fl; f++) {
+                        flare = object.lensFlares[f];
+                        flare.x = object.positionScreen.x + vecX * flare.distance;
+                        flare.y = object.positionScreen.y + vecY * flare.distance;
+                        flare.rotation = 0;
+                    }
+                    object.lensFlares[2].y += 0.025;
+                    object.lensFlares[3].rotation = object.positionScreen.x * 0.5 + THREE.Math.degToRad(45);
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            app.init();
+        });
+    </script>
+</head>
+<body>
+    <span id="info"></span>
+</body>
+</html>
