@@ -104,20 +104,10 @@ THREE.ShaderGodRays = {
             // Unrolling didnt do much on my hardware (ATI Mobility Radeon 3450),
             // so i've just left the loop
 
-            //"for ( float i = 0.0; i < TAPS_PER_PASS; i += 1.0 ) {",
-
-            //    // Accumulate samples, making sure we dont walk past the light source.
-
-            //    // The check for uv.y < 1 would not be necessary with "border" UV wrap
-            //    // mode, with a black border colour. I don't think this is currently
-            //    // exposed by three.js. As a result there might be artifacts when the
-            //    // sun is to the left, right or bottom of screen as these cases are
-            //    // not specifically handled.
-
-            //    "col += ( i <= iters && uv.y < 1.0 ? texture2D( tInput, uv ).r : 0.0 );",
-            //    "uv += stepv;",
-
-            //"}",
+            "for ( float i = 0.0; i < TAPS_PER_PASS; i += 1.0 ) {",
+                "col += ( i <= iters && uv.y < 1.0 ? texture2D( tInput, uv ).r : 0.0 );",
+                "uv += stepv;",
+            "}",
             
 
             // Unrolling loop manually makes it work in ANGLE
